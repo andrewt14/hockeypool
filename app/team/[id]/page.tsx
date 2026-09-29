@@ -5,15 +5,10 @@ import { fmt, points, type Slot } from "@/lib/pool";
 import { Headshot, PosBadge, TeamLogo } from "@/components/ui";
 
 const GROUPS: [string, Slot[]][] = [
-  ["Centers", ["C1", "C2"]],
-  ["Wingers", ["W1", "W2"]],
-  ["Defense", ["D1", "D2"]],
-  ["Goalie", ["G1"]],
-  ["Utility", ["U1", "U2"]],
+  ["Forwards", ["F1", "F2", "F3", "F4", "F5", "F6", "F7"]],
+  ["Defense", ["D1", "D2", "D3"]],
 ];
-// Only the stats that can score for that slot type, so names fit on a phone.
-const SKATER = ["g", "a"] as const;
-const GOALIE = ["w", "so", "otl"] as const;
+const COLS = ["g", "a"] as const;
 
 export default async function TeamPage({ params }: PageProps<"/team/[id]">) {
   const id = Number((await params).id);
@@ -41,13 +36,11 @@ export default async function TeamPage({ params }: PageProps<"/team/[id]">) {
       </section>
 
       <div className="space-y-4 px-4">
-        {GROUPS.map(([label, slots]) => {
-          const cols = label === "Goalie" ? GOALIE : SKATER;
-          return (
+        {GROUPS.map(([label, slots]) => (
           <section key={label} className="overflow-hidden rounded-2xl border border-line bg-card">
             <div className="flex items-center gap-2 border-b border-line bg-panel px-3 py-2 text-[11px] font-bold tracking-wide text-mute uppercase">
               <span className="flex-1">{label}</span>
-              {cols.map((c) => <span key={c} className="w-8 text-center">{c}</span>)}
+              {COLS.map((c) => <span key={c} className="w-8 text-center">{c}</span>)}
               <span className="w-10 text-right text-white">Pts</span>
             </div>
             <ul>
@@ -66,7 +59,7 @@ export default async function TeamPage({ params }: PageProps<"/team/[id]">) {
                           <TeamLogo abbr={p.team} size={14} /> {p.team} <PosBadge pos={p.pos} />
                         </p>
                       </div>
-                      {cols.map((c) => (
+                      {COLS.map((c) => (
                         <span key={c} className={`w-8 text-center text-sm tabular-nums ${p.cur[c] ? "" : "text-line"}`}>{p.cur[c] ?? 0}</span>
                       ))}
                       <span className="w-10 text-right font-display text-lg font-bold">{fmt(points(p.cur, settings.scoring))}</span>
@@ -76,8 +69,7 @@ export default async function TeamPage({ params }: PageProps<"/team/[id]">) {
               })}
             </ul>
           </section>
-          );
-        })}
+        ))}
       </div>
     </>
   );

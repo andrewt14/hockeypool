@@ -7,14 +7,12 @@ const POS_STYLE: Record<string, string> = {
   C: "bg-sky-500/20 text-sky-300",
   W: "bg-emerald-500/20 text-emerald-300",
   D: "bg-amber-500/20 text-amber-300",
-  G: "bg-fuchsia-500/20 text-fuchsia-300",
-  U: "bg-slate-500/25 text-slate-300",
 };
 
-export function PosBadge({ pos }: { pos: Pos | "U" }) {
+export function PosBadge({ pos }: { pos: Pos }) {
   return (
     <span className={`inline-flex h-5 min-w-7 items-center justify-center rounded px-1.5 font-display text-xs font-bold ${POS_STYLE[pos]}`}>
-      {pos === "U" ? "UTIL" : pos}
+      {pos}
     </span>
   );
 }

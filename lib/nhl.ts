@@ -34,20 +34,18 @@ async function fetchRosters() {
 }
 
 type SummaryRow = {
-  playerId: number; skaterFullName?: string; goalieFullName?: string; teamAbbrevs: string; positionCode?: string;
-  gamesPlayed: number; goals: number; assists: number; wins?: number; shutouts?: number; otLosses?: number;
+  playerId: number; skaterFullName: string; teamAbbrevs: string; positionCode: string;
+  gamesPlayed: number; goals: number; assists: number;
 };
 
+// Skaters only: goalies aren't in the pool.
 async function summaries(season: string): Promise<SummaryRow[]> {
   const q = `limit=-1&cayenneExp=${encodeURIComponent(`seasonId=${season} and gameTypeId=2`)}`;
-  const [s, g] = await Promise.all(
-    ["skater", "goalie"].map((k) => json(`https://api.nhle.com/stats/rest/en/${k}/summary?${q}`)),
-  );
-  return [...s.data, ...g.data];
+  return (await json(`https://api.nhle.com/stats/rest/en/skater/summary?${q}`)).data;
 }
 
 const toStats = (r: SummaryRow): Stats => ({
-  gp: r.gamesPlayed, g: r.goals, a: r.assists, w: r.wins, so: r.shutouts, otl: r.otLosses,
+  gp: r.gamesPlayed, g: r.goals, a: r.assists,
 });
 
 type RosterPlayer = { id: number; headshot: string; firstName: { default: string }; lastName: { default: string }; positionCode: string };
@@ -66,16 +64,20 @@ export async function refreshStats() {
   // Anyone with stats this season stays pickable and keeps scoring, even if dropped from a roster (sent down, etc).
   for (const r of cur) {
     const team = r.teamAbbrevs.split(",").at(-1)!;
+    const pos = posFromCode(r.positionCode);
+    if (!pos) continue;
     rows.set(r.playerId, {
-      id: r.playerId, name: (r.skaterFullName ?? r.goalieFullName)!, team, pos: posFromCode(r.positionCode ?? "G"),
+      id: r.playerId, name: r.skaterFullName, team, pos,
       headshot: `https://assets.nhle.com/mugs/nhl/${SEASON}/${team}/${r.playerId}.png`,
     });
   }
   // Roster data wins: exact headshot URL and current team.
   for (const { team, r } of rosters) {
-    for (const p of [...r.forwards, ...r.defensemen, ...r.goalies] as RosterPlayer[]) {
+    for (const p of [...r.forwards, ...r.defensemen] as RosterPlayer[]) {
+      const pos = posFromCode(p.positionCode);
+      if (!pos) continue;
       rows.set(p.id, {
-        id: p.id, name: `${p.firstName.default} ${p.lastName.default}`, team, pos: posFromCode(p.positionCode), headshot: p.headshot,
+        id: p.id, name: `${p.firstName.default} ${p.lastName.default}`, team, pos, headshot: p.headshot,
       });
     }
   }

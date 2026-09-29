@@ -6,9 +6,7 @@ import { setMe, useMe } from "@/components/Shell";
 import { LocalTime, PageHeader } from "@/components/ui";
 import type { Settings } from "@/lib/db";
 
-const SCORING = [
-  ["g", "Goal"], ["a", "Assist"], ["w", "Goalie win"], ["so", "Shutout"], ["otl", "OT loss"],
-] as const;
+const SCORING = [["g", "Goal"], ["a", "Assist"]] as const;
 
 const card = "rounded-2xl border border-line bg-card p-4";
 const input = "h-11 rounded-xl border border-line bg-ink px-3 outline-none focus:border-accent";
@@ -90,7 +88,7 @@ export default function SettingsClient({ settings }: { settings: Settings }) {
               action={(fd) => run(() => saveScoring(admin, Object.fromEntries(SCORING.map(([k]) => [k, Number(fd.get(k))])) as Settings["scoring"]), "Scoring saved")}
             >
               <p className="font-semibold">Scoring</p>
-              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
+              <div className="mt-3 grid grid-cols-2 gap-3">
                 {SCORING.map(([k, label]) => (
                   <label key={k} className="text-xs text-mute">
                     {label}

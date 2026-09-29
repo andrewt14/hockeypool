@@ -9,7 +9,7 @@ import { fmt, pickSlot, SLOTS, type Pos, type Slot } from "@/lib/pool";
 
 export type PickPlayer = { id: number; name: string; team: string; pos: Pos; headshot: string | null; ly: number; now: number };
 
-const FILTERS = ["All", "C", "W", "D", "G"] as const;
+const FILTERS = ["All", "C", "W", "D"] as const;
 const SORTS = [
   { key: "ly", label: "Last yr" },
   { key: "now", label: "This yr" },
@@ -182,7 +182,7 @@ export default function PickClient({ players, rosters, locked }: { players: Pick
                 <button
                   onClick={() => add(p)}
                   disabled={mine || full}
-                  aria-label={mine ? `${p.name} is on your team` : full ? `No open ${p.pos} slot` : `Add ${p.name}`}
+                  aria-label={mine ? `${p.name} is on your team` : full ? `No open ${p.pos === "D" ? "D" : "forward"} slot` : `Add ${p.name}`}
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-display text-2xl font-bold transition active:scale-90 ${
                     mine ? "bg-up/15 text-up" : full ? "bg-panel text-line" : "bg-accent text-white shadow-md shadow-accent/30 hover:bg-accent-hi"
                   }`}
@@ -203,9 +203,9 @@ export default function PickClient({ players, rosters, locked }: { players: Pick
           <div className="mx-auto max-w-lg">
             <div className="mb-2 flex items-center justify-between text-xs">
               <span className="font-semibold">{myTeam?.emoji} {myTeam?.name}</span>
-              <span className="text-mute">{locked ? "🔒 Locked" : mySlots.size ? "Tap a player to remove" : ""} · <b className="text-white">{mySlots.size}/9</b></span>
+              <span className="text-mute">{locked ? "🔒 Locked" : mySlots.size ? "Tap a player to remove" : ""} · <b className="text-white">{mySlots.size}/{SLOTS.length}</b></span>
             </div>
-            <ol className="grid grid-cols-9 gap-1.5">
+            <ol className="grid grid-cols-10 gap-0.5">
               {SLOTS.map((slot) => {
                 const p = mySlots.get(slot);
                 return (
@@ -218,14 +218,14 @@ export default function PickClient({ players, rosters, locked }: { players: Pick
                         aria-label={`Remove ${p.name} from ${slot}`}
                         className={`relative rounded-full ring-2 ring-accent ${popped === slot ? "animate-pop" : ""}`}
                       >
-                        <Headshot src={p.headshot} name={p.name} size={36} />
+                        <Headshot src={p.headshot} name={p.name} size={32} />
                       </button>
                     ) : (
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full border border-dashed border-line font-display text-xs font-bold text-mute">
-                        {slot[0] === "U" ? "UT" : slot[0]}
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-line font-display text-xs font-bold text-mute">
+                        {slot[0]}
                       </span>
                     )}
-                    <span className="max-w-full truncate text-[9px] text-mute">{p ? p.name.split(" ").at(-1) : slot[0] === "U" ? "UTIL" : slot}</span>
+                    <span className="max-w-full truncate text-[9px] text-mute">{p ? p.name.split(" ").at(-1) : slot}</span>
                   </li>
                 );
               })}

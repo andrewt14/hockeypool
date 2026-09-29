@@ -15,15 +15,15 @@ create table players (
   id bigint primary key,            -- NHL player id
   name text not null,
   team text not null,               -- NHL team abbrev
-  pos text not null check (pos in ('C', 'W', 'D', 'G')),
+  pos text not null check (pos in ('C', 'W', 'D')),  -- skaters only
   headshot text,
-  cur jsonb not null default '{}',  -- this season {gp,g,a,w,so,otl}
+  cur jsonb not null default '{}',  -- this season {gp,g,a}
   last jsonb not null default '{}'  -- last season, same shape
 );
 
 create table rosters (
   team_id int not null references teams on delete cascade,
-  slot text not null check (slot in ('C1','C2','W1','W2','D1','D2','G1','U1','U2')),
+  slot text not null check (slot in ('F1','F2','F3','F4','F5','F6','F7','D1','D2','D3')),  -- 7 F + 3 D
   player_id bigint not null references players,
   primary key (team_id, slot),
   unique (team_id, player_id)
@@ -31,7 +31,7 @@ create table rosters (
 
 create table settings (
   id int primary key default 1 check (id = 1),
-  scoring jsonb not null default '{"g":1,"a":1,"w":2,"so":3,"otl":1}',
+  scoring jsonb not null default '{"g":1,"a":1}',
   locked boolean not null default false,
   stats_updated_at timestamptz
 );

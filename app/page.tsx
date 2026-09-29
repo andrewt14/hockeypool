@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getStandings } from "@/lib/db";
-import { fmt } from "@/lib/pool";
+import { fmt, SLOTS } from "@/lib/pool";
 import { LocalTime, PageHeader } from "@/components/ui";
 
 function Trend({ move }: { move: number }) {
@@ -35,7 +35,7 @@ export default async function Standings() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-lg font-semibold">{r.team.name}</p>
-                  <p className="text-xs text-mute">{lead ? "👑 Leader" : `${r.count}/9 players`}</p>
+                  <p className="text-xs text-mute">{lead ? "👑 Leader" : `${r.count}/${SLOTS.length} players`}</p>
                 </div>
                 <div className="text-right">
                   <p className={`font-display text-4xl leading-none font-bold ${lead ? "text-gold" : ""}`}>{fmt(r.total)}</p>

@@ -41,7 +41,7 @@ export async function addPlayer(teamId: number, pin: string, playerId: number): 
   if (!player || !roster) return { error: "Player not found" };
   if (roster.some((r) => r.player_id === Number(playerId))) return { error: "Already on your roster" };
   const slot = pickSlot(player.pos as Pos, roster.map((r) => r.slot));
-  if (!slot) return { error: `No open ${player.pos === "G" ? "G" : player.pos + " or UTIL"} slot` };
+  if (!slot) return { error: `No open ${player.pos === "D" ? "D" : "forward"} slot` };
   const { error } = await db().from("rosters").insert({ team_id: Number(teamId), slot, player_id: Number(playerId) });
   return error ? { error: "Roster changed, try again" } : { slot };
 }
@@ -80,7 +80,7 @@ export async function resetTeamPin(pin: string, id: number): Promise<Result> {
 }
 
 export async function saveScoring(pin: string, s: Scoring): Promise<Result> {
-  const scoring = { g: +s.g, a: +s.a, w: +s.w, so: +s.so, otl: +s.otl };
+  const scoring = { g: +s.g, a: +s.a };
   if (Object.values(scoring).some((v) => !Number.isFinite(v))) return { error: "Scoring values must be numbers" };
   return admin(pin, () => db().from("settings").update({ scoring }).eq("id", 1));
 }

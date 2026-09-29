@@ -11,8 +11,7 @@ export default async function PlayerPage({ params }: PageProps<"/player/[id]">) 
   if (!p) notFound();
   const ownerIds = new Set(rosters.filter((r) => r.player_id === id).map((r) => r.team_id));
   const owners = teams.filter((t) => ownerIds.has(t.id));
-  const cols: [keyof Stats, string][] =
-    p.pos === "G" ? [["gp", "GP"], ["w", "W"], ["so", "SO"], ["otl", "OTL"]] : [["gp", "GP"], ["g", "G"], ["a", "A"]];
+  const cols: [keyof Stats, string][] = [["gp", "GP"], ["g", "G"], ["a", "A"]];
 
   const statRow = (label: string, s: Stats) => (
     <div className="rounded-2xl border border-line bg-card p-4">

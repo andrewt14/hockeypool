@@ -7,7 +7,7 @@ Private NHL fantasy pool for 4 roommates. Next.js + Supabase + Vercel, stats fro
 - **Team** (`/team/[id]`) and **Player** (`/player/[id]`) pages
 - **Settings**: switch team on this device; admin can edit team names/emojis, scoring, lock/unlock rosters, refresh stats, and reset a team's PIN
 
-Roster: 2 C, 2 W, 2 D, 1 G, 2 UTIL (any skater). Players aren't exclusive. Fantasy points are computed live from the saved scoring settings, so a scoring change applies to the whole season immediately.
+Roster: 10 skaters: 7 forwards (any C or W) and 3 defensemen. No goalies. Scoring is goals and assists. Players aren't exclusive. Fantasy points are computed live from the saved scoring settings, so a scoring change applies to the whole season immediately.
 
 ## 1. Supabase
 
@@ -43,7 +43,7 @@ Then open **Settings**, enter the admin PIN, and tap **Refresh stats** (about 15
 ## How to use it
 
 - On first visit, each roommate picks their team. The first person to pick a team creates its 4-digit PIN, and it's saved on that device. Lost your PIN? The admin can reset it in Settings.
-- Draft on the **Pick** tab until everyone has 9, then the admin hits **Lock rosters**.
+- Draft on the **Pick** tab until everyone has 10, then the admin hits **Lock rosters**.
 - "Today" and the trend arrows compare against the previous day's snapshot, which is saved on each refresh. They start showing movement after the second daily refresh.
 
 ## Each new season

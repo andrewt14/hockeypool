@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getStandings } from "@/lib/db";
 import { FORWARD_ROUNDS, fmt, points, ROUNDS, slotOf } from "@/lib/pool";
 import { Headshot, PosBadge, TeamLogo } from "@/components/ui";
+import { BOARD_RANK } from "@/lib/rankings";
 
 const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
 const GROUPS: [string, number[]][] = [
@@ -57,7 +58,10 @@ export default async function TeamPage({ params }: PageProps<"/team/[id]">) {
                       {tag}
                       <Headshot src={p.headshot} name={p.name} size={40} />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">{p.name}</p>
+                        <p className="flex items-baseline gap-1.5 text-sm font-semibold">
+                          {BOARD_RANK.has(p.id) && <span className="shrink-0 font-display font-bold text-gold">#{BOARD_RANK.get(p.id)}</span>}
+                          <span className="min-w-0 truncate">{p.name}</span>
+                        </p>
                         <p className="flex items-center gap-1 text-[11px] text-mute">
                           <TeamLogo abbr={p.team} size={14} /> {p.team} <PosBadge pos={p.pos} />
                         </p>

@@ -1,8 +1,8 @@
 "use server";
 // Server actions are public endpoints: every argument is untrusted and re-validated here.
-import { db, getSettings } from "@/lib/db";
+import { db, getPlayers, getSettings } from "@/lib/db";
 import { refreshStats } from "@/lib/nhl";
-import { pickSlot, SLOTS, type Pos, type Scoring, type Slot } from "@/lib/pool";
+import { buildBoxes, ROUNDS, SLOTS, slotOf, type Scoring, type Slot } from "@/lib/pool";
 
 type Result = { error?: string };
 const isPin = (pin: unknown): pin is string => typeof pin === "string" && /^\d{4}$/.test(pin);
@@ -31,19 +31,17 @@ async function guardRoster(teamId: number, pin: string): Promise<string | null> 
   return t && isPin(pin) && t.pin === pin ? null : "Wrong PIN — switch team in Settings";
 }
 
-export async function addPlayer(teamId: number, pin: string, playerId: number): Promise<Result & { slot?: Slot }> {
+/** Set (or change) this team's pick for a round. The player must be in that round's box. */
+export async function pickPlayer(teamId: number, pin: string, round: number, playerId: number): Promise<Result> {
   const bad = await guardRoster(teamId, pin);
   if (bad) return { error: bad };
-  const [{ data: player }, { data: roster }] = await Promise.all([
-    db().from("players").select("pos").eq("id", Number(playerId)).maybeSingle(),
-    db().from("rosters").select("slot,player_id").eq("team_id", Number(teamId)),
-  ]);
-  if (!player || !roster) return { error: "Player not found" };
-  if (roster.some((r) => r.player_id === Number(playerId))) return { error: "Already on your roster" };
-  const slot = pickSlot(player.pos as Pos, roster.map((r) => r.slot));
-  if (!slot) return { error: `No open ${player.pos === "D" ? "D" : "forward"} slot` };
-  const { error } = await db().from("rosters").insert({ team_id: Number(teamId), slot, player_id: Number(playerId) });
-  return error ? { error: "Roster changed, try again" } : { slot };
+  if (!Number.isInteger(round) || round < 1 || round > ROUNDS) return { error: "Bad round" };
+  const box = buildBoxes(await getPlayers())[round - 1];
+  if (!box.some((p) => p.id === Number(playerId))) return { error: `That player isn't in round ${round}` };
+  const { error } = await db()
+    .from("rosters")
+    .upsert({ team_id: Number(teamId), slot: slotOf(round), player_id: Number(playerId) });
+  return error ? { error: "Couldn't save pick, try again" } : {};
 }
 
 export async function removePlayer(teamId: number, pin: string, slot: Slot): Promise<Result> {

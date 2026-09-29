@@ -23,7 +23,7 @@ create table players (
 
 create table rosters (
   team_id int not null references teams on delete cascade,
-  slot text not null check (slot in ('F1','F2','F3','F4','F5','F6','F7','D1','D2','D3')),  -- 7 F + 3 D
+  slot text not null check (slot ~ '^R([1-9]|1[0-4])$'),  -- round 1-14: R1-R10 forwards, R11-R14 defense
   player_id bigint not null references players,
   primary key (team_id, slot),
   unique (team_id, player_id)

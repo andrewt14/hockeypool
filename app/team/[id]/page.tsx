@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getStandings } from "@/lib/db";
-import { fmt, points, type Slot } from "@/lib/pool";
+import { FORWARD_ROUNDS, fmt, points, ROUNDS, slotOf } from "@/lib/pool";
 import { Headshot, PosBadge, TeamLogo } from "@/components/ui";
 
-const GROUPS: [string, Slot[]][] = [
-  ["Forwards", ["F1", "F2", "F3", "F4", "F5", "F6", "F7"]],
-  ["Defense", ["D1", "D2", "D3"]],
+const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
+const GROUPS: [string, number[]][] = [
+  ["Forwards", range(1, FORWARD_ROUNDS)],
+  ["Defense", range(FORWARD_ROUNDS + 1, ROUNDS)],
 ];
 const COLS = ["g", "a"] as const;
 
@@ -36,7 +37,7 @@ export default async function TeamPage({ params }: PageProps<"/team/[id]">) {
       </section>
 
       <div className="space-y-4 px-4">
-        {GROUPS.map(([label, slots]) => (
+        {GROUPS.map(([label, rounds]) => (
           <section key={label} className="overflow-hidden rounded-2xl border border-line bg-card">
             <div className="flex items-center gap-2 border-b border-line bg-panel px-3 py-2 text-[11px] font-bold tracking-wide text-mute uppercase">
               <span className="flex-1">{label}</span>
@@ -44,14 +45,16 @@ export default async function TeamPage({ params }: PageProps<"/team/[id]">) {
               <span className="w-10 text-right text-white">Pts</span>
             </div>
             <ul>
-              {slots.map((slot) => {
-                const p = bySlot.get(slot);
+              {rounds.map((round) => {
+                const p = bySlot.get(slotOf(round));
+                const tag = <span className="w-6 shrink-0 font-display text-xs font-bold text-mute">R{round}</span>;
                 if (!p) {
-                  return <li key={slot} className="px-3 py-4 text-sm text-mute italic">Empty slot</li>;
+                  return <li key={round} className="flex items-center gap-2 border-t border-line/50 px-3 py-4 text-sm text-mute italic first:border-t-0">{tag}Not picked</li>;
                 }
                 return (
-                  <li key={slot} className="border-t border-line/50 first:border-t-0">
+                  <li key={round} className="border-t border-line/50 first:border-t-0">
                     <Link href={`/player/${p.id}`} className="flex items-center gap-2 px-3 py-2.5">
+                      {tag}
                       <Headshot src={p.headshot} name={p.name} size={40} />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">{p.name}</p>

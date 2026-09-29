@@ -6,18 +6,30 @@ export type Scoring = { g: number; a: number };
 
 export const DEFAULT_SCORING: Scoring = { g: 1, a: 1 };
 
-// 7 forwards (any C or W) + 3 defense.
-export const SLOTS = ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "D1", "D2", "D3"] as const;
-export type Slot = (typeof SLOTS)[number];
+// Box pool: one pick per round. Rounds 1-10 are forward boxes, 11-14 are defense boxes.
+export const FORWARD_ROUNDS = 10;
+export const D_ROUNDS = 4;
+export const BOX_SIZE = 10;
+export const ROUNDS = FORWARD_ROUNDS + D_ROUNDS;
+export const SLOTS = Array.from({ length: ROUNDS }, (_, i) => `R${i + 1}`);
+export type Slot = string; // "R1".."R14"
+export const slotOf = (round: number) => `R${round}`;
+export const roundOf = (slot: string) => Number(slot.slice(1));
+export const isDefenseRound = (round: number) => round > FORWARD_ROUNDS;
 
-export function slotAccepts(slot: Slot, pos: Pos) {
-  return slot[0] === "D" ? pos === "D" : pos !== "D";
-}
+/** NHL points (G+A) last season: what boxes are tiered by. */
+export const lastPts = (s: Stats | null | undefined) => (s?.g ?? 0) + (s?.a ?? 0);
 
-/** First open slot for this position. null = no room. */
-export function pickSlot(pos: Pos, filled: Iterable<string>): Slot | null {
-  const taken = new Set(filled);
-  return SLOTS.find((s) => !taken.has(s) && slotAccepts(s, pos)) ?? null;
+/**
+ * Split players into tiered boxes: best 10 forwards in round 1, next 10 in round 2, ...,
+ * then the same for defensemen. Returns boxes[round - 1].
+ */
+export function buildBoxes<T extends { id: number; pos: Pos; last: Stats }>(players: T[]): T[][] {
+  const rank = (a: T, b: T) => lastPts(b.last) - lastPts(a.last) || a.id - b.id;
+  const fwd = players.filter((p) => p.pos !== "D").sort(rank);
+  const def = players.filter((p) => p.pos === "D").sort(rank);
+  const tiers = (list: T[], n: number) => Array.from({ length: n }, (_, i) => list.slice(i * BOX_SIZE, (i + 1) * BOX_SIZE));
+  return [...tiers(fwd, FORWARD_ROUNDS), ...tiers(def, D_ROUNDS)];
 }
 
 export function points(s: Stats | null | undefined, k: Scoring) {

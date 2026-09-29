@@ -124,7 +124,9 @@ function TeamGate({ teams }: { teams: Team[] }) {
               {team.emoji} {team.name}
             </h2>
             <label className="mt-4 block text-sm text-mute" htmlFor="pin">
-              {team.hasPin ? "Enter your 4-digit PIN" : "Create a 4-digit PIN for your team"}
+              {team.hasPin
+                ? "Enter your team PIN (the one you made, not the admin PIN)"
+                : "Make up a 4-digit PIN for your team. You'll use it to make picks on other devices."}
             </label>
             <input
               id="pin"

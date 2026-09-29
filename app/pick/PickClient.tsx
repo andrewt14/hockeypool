@@ -7,7 +7,7 @@ import { Headshot, PosBadge, TeamLogo } from "@/components/ui";
 import type { RosterRow, Team } from "@/lib/db";
 import { fmt, isDefenseRound, roundOf, ROUNDS, slotOf, type Pos } from "@/lib/pool";
 
-export type BoxPlayer = { id: number; name: string; team: string; pos: Pos; headshot: string | null; ly: number; now: number };
+export type BoxPlayer = { id: number; name: string; team: string; pos: Pos; headshot: string | null; ly: number; now: number; rank: number | null };
 
 const ROUND_NUMS = Array.from({ length: ROUNDS }, (_, i) => i + 1);
 
@@ -143,7 +143,10 @@ export default function PickClient({ boxes, rosters, locked }: { boxes: BoxPlaye
                     </span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{p.name}</p>
+                    <p className="flex items-baseline gap-1.5 truncate font-semibold">
+                      {p.rank && <span className="shrink-0 font-display text-sm font-bold text-gold" title="NHL.com fantasy big board rank">#{p.rank}</span>}
+                      <span className="min-w-0 truncate">{p.name}</span>
+                    </p>
                     <div className="mt-1 flex items-center gap-1.5 text-xs text-mute">
                       <PosBadge pos={p.pos} />
                       <span>{p.team}</span>

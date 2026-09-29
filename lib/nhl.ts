@@ -1,6 +1,7 @@
 import "server-only";
 import { db, getStandings, today } from "./db";
 import { posFromCode, type Stats } from "./pool";
+import { RANKING } from "./rankings";
 
 // Bump both each September.
 export const SEASON = "20262027";
@@ -70,6 +71,14 @@ export async function refreshStats() {
       id: r.playerId, name: r.skaterFullName, team, pos,
       headshot: `https://assets.nhle.com/mugs/nhl/${SEASON}/${team}/${r.playerId}.png`,
     });
+  }
+  // Ranked players missing from rosters (injured, unsigned) still need to be pickable.
+  const ranked = new Set(RANKING);
+  for (const r of last) {
+    if (rows.has(r.playerId) || !ranked.has(r.playerId)) continue;
+    const pos = posFromCode(r.positionCode);
+    const team = r.teamAbbrevs.split(",").at(-1)!;
+    if (pos) rows.set(r.playerId, { id: r.playerId, name: r.skaterFullName, team, pos, headshot: `https://assets.nhle.com/mugs/nhl/${SEASON}/${team}/${r.playerId}.png` });
   }
   // Roster data wins: exact headshot URL and current team.
   for (const { team, r } of rosters) {

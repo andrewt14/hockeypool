@@ -17,15 +17,18 @@ export const slotOf = (round: number) => `R${round}`;
 export const roundOf = (slot: string) => Number(slot.slice(1));
 export const isDefenseRound = (round: number) => round > FORWARD_ROUNDS;
 
-/** NHL points (G+A) last season: what boxes are tiered by. */
+/** NHL points (G+A) last season. */
 export const lastPts = (s: Stats | null | undefined) => (s?.g ?? 0) + (s?.a ?? 0);
 
 /**
- * Split players into tiered boxes: best 10 forwards in round 1, next 10 in round 2, ...,
- * then the same for defensemen. Returns boxes[round - 1].
+ * Split players into tiered boxes: top 10 forwards in round 1, next 10 in round 2, ...,
+ * then the same for defensemen. Order follows `ranking` (player IDs, best first); anyone
+ * not in it goes after, by last season's points. Returns boxes[round - 1].
  */
-export function buildBoxes<T extends { id: number; pos: Pos; last: Stats }>(players: T[]): T[][] {
-  const rank = (a: T, b: T) => lastPts(b.last) - lastPts(a.last) || a.id - b.id;
+export function buildBoxes<T extends { id: number; pos: Pos; last: Stats }>(players: T[], ranking: number[]): T[][] {
+  const idx = new Map(ranking.map((id, i) => [id, i]));
+  const at = (p: T) => idx.get(p.id) ?? Infinity;
+  const rank = (a: T, b: T) => at(a) - at(b) || lastPts(b.last) - lastPts(a.last) || a.id - b.id;
   const fwd = players.filter((p) => p.pos !== "D").sort(rank);
   const def = players.filter((p) => p.pos === "D").sort(rank);
   const tiers = (list: T[], n: number) => Array.from({ length: n }, (_, i) => list.slice(i * BOX_SIZE, (i + 1) * BOX_SIZE));

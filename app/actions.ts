@@ -2,6 +2,7 @@
 // Server actions are public endpoints: every argument is untrusted and re-validated here.
 import { db, getPlayers, getSettings } from "@/lib/db";
 import { refreshStats } from "@/lib/nhl";
+import { RANKING } from "@/lib/rankings";
 import { buildBoxes, ROUNDS, SLOTS, slotOf, type Scoring, type Slot } from "@/lib/pool";
 
 type Result = { error?: string };
@@ -36,7 +37,7 @@ export async function pickPlayer(teamId: number, pin: string, round: number, pla
   const bad = await guardRoster(teamId, pin);
   if (bad) return { error: bad };
   if (!Number.isInteger(round) || round < 1 || round > ROUNDS) return { error: "Bad round" };
-  const box = buildBoxes(await getPlayers())[round - 1];
+  const box = buildBoxes(await getPlayers(), RANKING)[round - 1];
   if (!box.some((p) => p.id === Number(playerId))) return { error: `That player isn't in round ${round}` };
   const { error } = await db()
     .from("rosters")

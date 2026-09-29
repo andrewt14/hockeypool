@@ -9,7 +9,7 @@ create table teams (
   pin text check (pin ~ '^\d{4}$')
 );
 insert into teams (id, name, emoji) values
-  (1, 'Team 1', '🏒'), (2, 'Team 2', '🥅'), (3, 'Team 3', '🚨'), (4, 'Team 4', '🧊');
+  (1, 'Sauce', '🏒'), (2, 'Luke', '🥅'), (3, 'Noah', '🚨'), (4, 'Jake', '🧊');
 
 create table players (
   id bigint primary key,            -- NHL player id

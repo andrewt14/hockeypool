@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Puck Pool
 
-## Getting Started
+Private NHL fantasy pool for 4 roommates. Next.js + Supabase + Vercel, stats from the free NHL API.
 
-First, run the development server:
+- **Standings** (`/`): ranked teams, points gained today, rank trend, last-updated time
+- **Pick** (`/pick`): search, position filter and sort, one-tap add into the right slot, a draft tray (tap a player to remove), and "Also on" badges for roommates who picked the same player
+- **Team** (`/team/[id]`) and **Player** (`/player/[id]`) pages
+- **Settings**: switch team on this device; admin can edit team names/emojis, scoring, lock/unlock rosters, refresh stats, and reset a team's PIN
+
+Roster: 2 C, 2 W, 2 D, 1 G, 2 UTIL (any skater). Players aren't exclusive. Fantasy points are computed live from the saved scoring settings, so a scoring change applies to the whole season immediately.
+
+## 1. Supabase
+
+1. Create a free project at [supabase.com](https://supabase.com).
+2. Open **SQL Editor**, paste all of [`supabase/schema.sql`](supabase/schema.sql), and click **Run**. This creates the tables, the 4 teams, and the default scoring.
+3. From **Project Settings → API**, copy:
+   - the **Project URL** → `SUPABASE_URL`
+   - a **Secret key** (`sb_secret_…`; or the legacy `service_role` key) → `SUPABASE_SECRET_KEY`
+
+The secret key is only used on the server. RLS is on with no policies, so the public anon key can't read anything.
+
+## 2. Run locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local   # fill in the values
+npm install
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open **Settings**, enter the admin PIN, and tap **Refresh stats** (about 15 s). That loads every player from the NHL rosters, plus this season's and last season's stats.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`npm test` runs the checks for slot filling and scoring.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 3. Deploy on Vercel
 
-## Learn More
+1. Push this repo to GitHub, then **Add New → Project** on [vercel.com](https://vercel.com) and import it. It's detected as Next.js automatically.
+2. Under **Settings → Environment Variables**, add all four variables from `.env.example`:
+   - `SUPABASE_URL`, `SUPABASE_SECRET_KEY`
+   - `ADMIN_PIN`: whatever you want the admin PIN to be
+   - `CRON_SECRET`: any long random string (`openssl rand -hex 32`). Vercel sends it to the cron route automatically.
+3. Deploy. `vercel.json` schedules `/api/refresh` daily at 10:00 UTC (6 AM Eastern, after the night's games). Check it under **Settings → Cron Jobs**.
 
-To learn more about Next.js, take a look at the following resources:
+## How to use it
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- On first visit, each roommate picks their team. The first person to pick a team creates its 4-digit PIN, and it's saved on that device. Lost your PIN? The admin can reset it in Settings.
+- Draft on the **Pick** tab until everyone has 9, then the admin hits **Lock rosters**.
+- "Today" and the trend arrows compare against the previous day's snapshot, which is saved on each refresh. They start showing movement after the second daily refresh.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Each new season
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Update `SEASON` and `LAST_SEASON` at the top of `lib/nhl.ts` (e.g. `20272028` / `20262027`), unlock rosters, and clear the old picks: `delete from rosters; delete from snapshots;`.

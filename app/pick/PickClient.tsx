@@ -11,7 +11,7 @@ export type BoxPlayer = { id: number; name: string; team: string; pos: Pos; head
 
 const ROUND_NUMS = Array.from({ length: ROUNDS }, (_, i) => i + 1);
 
-export default function PickClient({ boxes, rosters, locked }: { boxes: BoxPlayer[][]; rosters: RosterRow[]; locked: boolean }) {
+export default function PickClient({ boxes, rosters, locked: rostersLocked }: { boxes: BoxPlayer[][]; rosters: RosterRow[]; locked: boolean }) {
   const { me, teams } = useMe();
   const [rows, setRows] = useState(rosters); // optimistic copy of every team's picks
   const [chosen, setChosen] = useState<number | null>(null); // round the user navigated to
@@ -31,6 +31,7 @@ export default function PickClient({ boxes, rosters, locked }: { boxes: BoxPlaye
   const round = chosen ?? firstOpen ?? 1;
   const box = boxes[round - 1] ?? [];
   const done = myPick.size === ROUNDS;
+  const locked = rostersLocked || done; // last pick makes your team final
 
   function flash(msg: string) {
     setToast(msg);
@@ -67,7 +68,7 @@ export default function PickClient({ boxes, rosters, locked }: { boxes: BoxPlaye
     <div>
       <header className="px-4 pt-6 pb-2">
         <p className="font-display text-xs font-bold tracking-widest text-accent uppercase">
-          {locked ? "Rosters locked" : myTeam ? `${myTeam.emoji} ${myTeam.name}` : "Box pool"}
+          {rostersLocked ? "Rosters locked" : myTeam ? `${myTeam.emoji} ${myTeam.name}` : "Box pool"}
         </p>
         <div className="flex items-end justify-between gap-3">
           <h1 className="font-display text-3xl font-bold">Pick Players</h1>
@@ -102,9 +103,8 @@ export default function PickClient({ boxes, rosters, locked }: { boxes: BoxPlaye
 
       {done && (
         <p className="animate-rise mx-4 mt-3 rounded-xl border border-up/40 bg-up/10 px-4 py-3 text-sm">
-          ✅ All {ROUNDS} rounds picked.{" "}
+          ✅ All {ROUNDS} rounds picked. Your team is final.{" "}
           {me && <Link href={`/team/${me.teamId}`} className="font-semibold underline">View your team</Link>}
-          {!locked && " You can still swap picks until rosters lock."}
         </p>
       )}
 

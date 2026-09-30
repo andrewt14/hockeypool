@@ -29,7 +29,9 @@ export async function claimTeam(teamId: number, pin: string): Promise<Result> {
 async function guardRoster(teamId: number, pin: string): Promise<string | null> {
   if ((await getSettings()).locked) return "Rosters are locked";
   const t = await teamPin(teamId);
-  return t && isPin(pin) && t.pin === pin ? null : "Wrong PIN — switch team in Settings";
+  if (!t || !isPin(pin) || t.pin !== pin) return "Wrong PIN — switch team in Settings";
+  const { count } = await db().from("rosters").select("slot", { count: "exact", head: true }).eq("team_id", Number(teamId));
+  return (count ?? 0) >= ROUNDS ? "Your team is final — all picks are in" : null;
 }
 
 /** Set (or change) this team's pick for a round. The player must be in that round's box. */

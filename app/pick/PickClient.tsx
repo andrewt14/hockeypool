@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { pickPlayer, removePlayer } from "@/app/actions";
 import { useMe } from "@/components/Shell";
 import { Headshot, PosBadge, TeamLogo } from "@/components/ui";
@@ -11,12 +11,20 @@ export type BoxPlayer = { id: number; name: string; team: string; pos: Pos; head
 
 const ROUND_NUMS = Array.from({ length: ROUNDS }, (_, i) => i + 1);
 
-export default function PickClient({ boxes, rosters, locked: rostersLocked }: { boxes: BoxPlayer[][]; rosters: RosterRow[]; locked: boolean }) {
+export default function PickClient({ boxes, rosters, locked: rostersLocked, swapUntil }: { boxes: BoxPlayer[][]; rosters: RosterRow[]; locked: boolean; swapUntil: string | null }) {
   const { me, teams } = useMe();
   const [rows, setRows] = useState(rosters); // optimistic copy of every team's picks
   const [chosen, setChosen] = useState<number | null>(null); // round the user navigated to
   const [toast, setToast] = useState("");
   const [popped, setPopped] = useState<number | null>(null);
+  const end = swapUntil ? Date.parse(swapUntil) : 0;
+  const [left, setLeft] = useState(0); // ms left in the swap window; 0 until mounted, so no hydration mismatch
+  useEffect(() => {
+    const tick = () => setLeft(Math.max(0, end - Date.now()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [end]);
   const timers = useRef<{ toast?: ReturnType<typeof setTimeout>; advance?: ReturnType<typeof setTimeout> }>({});
 
   const teamById = new Map(teams.map((t) => [t.id, t]));
@@ -31,7 +39,8 @@ export default function PickClient({ boxes, rosters, locked: rostersLocked }: { 
   const round = chosen ?? firstOpen ?? 1;
   const box = boxes[round - 1] ?? [];
   const done = myPick.size === ROUNDS;
-  const locked = rostersLocked || done; // last pick makes your team final
+  const locked = rostersLocked || (done && left === 0); // full rosters are final once the swap window closes
+  const clock = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, "0")}`;
 
   function flash(msg: string) {
     setToast(msg);
@@ -103,7 +112,7 @@ export default function PickClient({ boxes, rosters, locked: rostersLocked }: { 
 
       {done && (
         <p className="animate-rise mx-4 mt-3 rounded-xl border border-up/40 bg-up/10 px-4 py-3 text-sm">
-          ✅ All {ROUNDS} rounds picked. Your team is final.{" "}
+          ✅ All {ROUNDS} rounds picked. {left > 0 ? <>Swaps close in <b>{clock}</b>.</> : "Your team is final."}{" "}
           {me && <Link href={`/team/${me.teamId}`} className="font-semibold underline">View your team</Link>}
         </p>
       )}

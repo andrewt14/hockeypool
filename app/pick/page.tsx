@@ -12,5 +12,5 @@ export default async function PickPage() {
       ly: lastPts(p.last), now: points(p.cur, settings.scoring), rank: BOARD_RANK.get(p.id) ?? null,
     })),
   );
-  return <PickClient boxes={boxes} rosters={rosters} locked={settings.locked} />;
+  return <PickClient boxes={boxes} rosters={rosters} locked={settings.locked} swapUntil={settings.swap_until} />;
 }

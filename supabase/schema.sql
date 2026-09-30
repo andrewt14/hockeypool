@@ -34,7 +34,8 @@ create table settings (
   id int primary key default 1 check (id = 1),
   scoring jsonb not null default '{"g":1,"a":1}',
   locked boolean not null default false,
-  stats_updated_at timestamptz
+  stats_updated_at timestamptz,
+  swap_until timestamptz            -- full rosters can still swap picks until this time
 );
 insert into settings default values;
 

@@ -12,7 +12,7 @@ export function db() {
 export type Team = { id: number; name: string; emoji: string; hasPin: boolean };
 export type Player = { id: number; name: string; team: string; pos: Pos; headshot: string | null; cur: Stats; last: Stats };
 export type RosterRow = { team_id: number; slot: Slot; player_id: number };
-export type Settings = { scoring: Scoring; locked: boolean; stats_updated_at: string | null };
+export type Settings = { scoring: Scoring; locked: boolean; stats_updated_at: string | null; swap_until: string | null };
 
 /** Calendar day in Eastern time, when NHL games are scheduled. */
 export const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
@@ -28,7 +28,7 @@ export async function getTeams(): Promise<Team[]> {
 }
 
 export async function getSettings(): Promise<Settings> {
-  const s = must<Settings>(await db().from("settings").select("scoring,locked,stats_updated_at").eq("id", 1).single());
+  const s = must<Settings>(await db().from("settings").select("scoring,locked,stats_updated_at,swap_until").eq("id", 1).single());
   return { ...s, scoring: { ...DEFAULT_SCORING, ...s.scoring } };
 }
 

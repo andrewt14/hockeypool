@@ -27,11 +27,14 @@ export async function claimTeam(teamId: number, pin: string): Promise<Result> {
 
 // ponytail: 4-digit PINs with no rate limit; fine among roommates, not against strangers.
 async function guardRoster(teamId: number, pin: string): Promise<string | null> {
-  if ((await getSettings()).locked) return "Rosters are locked";
+  const s = await getSettings();
+  if (s.locked) return "Rosters are locked";
   const t = await teamPin(teamId);
   if (!t || !isPin(pin) || t.pin !== pin) return "Wrong PIN — switch team in Settings";
   const { count } = await db().from("rosters").select("slot", { count: "exact", head: true }).eq("team_id", Number(teamId));
-  return (count ?? 0) >= ROUNDS ? "Your team is final — all picks are in" : null;
+  // Full rosters are final, except during the swap window (settings.swap_until).
+  const swapping = !!s.swap_until && Date.now() < Date.parse(s.swap_until);
+  return (count ?? 0) >= ROUNDS && !swapping ? "Your team is final — all picks are in" : null;
 }
 
 /** Set (or change) this team's pick for a round. The player must be in that round's box. */

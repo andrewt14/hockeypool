@@ -14,8 +14,8 @@ export type Player = { id: number; name: string; team: string; pos: Pos; headsho
 export type RosterRow = { team_id: number; slot: Slot; player_id: number };
 export type Settings = { scoring: Scoring; locked: boolean; stats_updated_at: string | null; swap_until: string | null };
 
-/** Calendar day in Eastern time, when NHL games are scheduled. */
-export const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
+/** Hockey day in Eastern time (NHL schedule dates), rolling over at 6am so late games stay on the day they started. */
+export const today = () => new Date(Date.now() - 6 * 3600e3).toLocaleDateString("en-CA", { timeZone: "America/Toronto" });
 
 function must<T>(res: { data: T | null; error: { message: string } | null }): T {
   if (res.error) throw new Error(res.error.message);

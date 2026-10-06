@@ -1,5 +1,5 @@
 import "server-only";
-import { db, getStandings, today } from "./db";
+import { db, getPlayers, getStandings, today } from "./db";
 import { posFromCode, type Stats } from "./pool";
 import { RANKING } from "./rankings";
 
@@ -51,6 +51,17 @@ const toStats = (r: SummaryRow): Stats => ({
 
 type RosterPlayer = { id: number; headshot: string; firstName: { default: string }; lastName: { default: string }; positionCode: string };
 
+/** Fast path (one NHL call): update this season's stats for players already in the pool, then snapshot. */
+export async function refreshCurrentStats() {
+  const cur = new Map((await summaries(SEASON)).map((r) => [r.playerId, toStats(r)]));
+  // Full rows so the upsert never inserts a partial player; new call-ups arrive with the daily full refresh.
+  const upserts = (await getPlayers()).filter((p) => cur.has(p.id)).map((p) => ({ ...p, cur: cur.get(p.id) }));
+  const { error } = await db().from("players").upsert(upserts);
+  if (error) throw new Error(error.message);
+  await snapshot();
+  return { players: upserts.length };
+}
+
 /** Pull rosters + both seasons of stats, upsert players, then snapshot today's standings. */
 export async function refreshStats() {
   const [rosters, cur, last] = await Promise.all([
@@ -93,10 +104,14 @@ export async function refreshStats() {
   const upserts = [...rows.values()].map((p) => ({ ...p, cur: curById.get(p.id) ?? {}, last: lastById.get(p.id) ?? {} }));
   const { error } = await db().from("players").upsert(upserts);
   if (error) throw new Error(error.message);
+  await snapshot();
+  return { players: upserts.length };
+}
 
+// Re-running on the same day overwrites that day's row, so "today" deltas stay vs yesterday.
+async function snapshot() {
   const { rows: standings } = await getStandings();
   const day = today();
   await db().from("snapshots").upsert(standings.map((s) => ({ day, team_id: s.team.id, points: s.total, rank: s.rank })));
   await db().from("settings").update({ stats_updated_at: new Date().toISOString() }).eq("id", 1);
-  return { players: upserts.length };
 }

@@ -1,4 +1,4 @@
 {
   "regions": ["pdx1"],
-  "crons": [{ "path": "/api/refresh", "schedule": "0 10 * * *" }]
+  "crons": [{ "path": "/api/refresh?full=1", "schedule": "0 10 * * *" }]
 }

@@ -53,3 +53,11 @@ alter table players enable row level security;
 alter table rosters enable row level security;
 alter table settings enable row level security;
 alter table snapshots enable row level security;
+
+-- Stats refresh every 15 min (Vercel Hobby crons are daily-only). Needs pg_cron + pg_net, and the
+-- app's CRON_SECRET in Vault: select vault.create_secret('<CRON_SECRET>', 'cron_secret');
+select cron.schedule('refresh-stats', '*/15 * * * *', $$select net.http_get(
+  url := 'https://puckpool-two.vercel.app/api/refresh',
+  headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'cron_secret')),
+  timeout_milliseconds := 30000
+)$$);

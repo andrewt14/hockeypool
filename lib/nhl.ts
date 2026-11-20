@@ -42,7 +42,13 @@ type SummaryRow = {
 // Skaters only: goalies aren't in the pool. `before` (YYYY-MM-DD) limits to games on earlier days.
 async function summaries(season: string, before?: string): Promise<SummaryRow[]> {
   const exp = `seasonId=${season} and gameTypeId=2${before ? ` and gameDate<"${before}"` : ""}`;
-  return (await json(`https://api.nhle.com/stats/rest/en/skater/summary?limit=-1&cayenneExp=${encodeURIComponent(exp)}`)).data;
+  // The API caps pages at 100 rows (limit=-1 is ignored), so page through with a stable sort.
+  const out: SummaryRow[] = [];
+  for (let start = 0; ; start += 100) {
+    const { data, total } = await json(`https://api.nhle.com/stats/rest/en/skater/summary?limit=100&start=${start}&sort=playerId&cayenneExp=${encodeURIComponent(exp)}`);
+    out.push(...data);
+    if (!data.length || out.length >= total) return out;
+  }
 }
 
 const toStats = (r: SummaryRow): Stats => ({
